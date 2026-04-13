@@ -9,32 +9,47 @@
 <body>
 
 <div id="app">
-  <header>
-    <h1>World Tracker</h1>
-    <div id="controls">
-      <button id="btn-pins" class="mode-btn pins active">📍 Cities</button>
-      <button id="btn-lang" class="mode-btn lang">🌐 Languages</button>
-      <button id="btn-gdp" class="mode-btn gdp">💰 GDP/capita</button>
-      <button id="btn-pop" class="mode-btn pop">👥 Population</button>
-      <button id="btn-expansion" class="mode-btn expansion">📈 Expansion</button>
-    </div>
-    <label id="block-toggle" class="toggle-label">
-      <input type="checkbox" id="chk-block" checked>
-      <span class="toggle-text">Block rich countries</span>
-      <div class="toggle-track">
-        <div class="toggle-thumb"></div>
+  <div id="app-body">
+    <!-- Left sidebar always visible -->
+    <div id="expansion-sidebar">
+      <div id="expansion-sidebar-header">
+        <div id="expansion-sidebar-title">Growth Roadmap</div>
+        <span id="expansion-sidebar-totals"></span>
       </div>
-    </label>
-  </header>
-
-  <div id="map-container">
-    <div id="map-wrap"></div>
-    <div id="zoom-controls">
-      <button id="zoom-in">+</button>
-      <button id="zoom-reset">⌂</button>
-      <button id="zoom-out">−</button>
+      <div id="expansion-sidebar-body"></div>
     </div>
-    <div id="legend"></div>
+
+    <!-- Main column: header + map -->
+    <div id="main-col">
+      <header>
+        <h1>World Tracker</h1>
+        <div id="controls">
+          <button id="btn-pins" class="mode-btn pins active">📍 Cities</button>
+          <button id="btn-lang" class="mode-btn lang">🌐 Languages</button>
+          <button id="btn-gdp" class="mode-btn gdp">💰 GDP/capita</button>
+          <button id="btn-pop" class="mode-btn pop">👥 Population</button>
+          <button id="btn-expansion" class="mode-btn expansion">📈 Expansion</button>
+        </div>
+        <button id="btn-roadmap" class="mode-btn roadmap">🗺 Full Roadmap</button>
+        <label id="block-toggle" class="toggle-label">
+          <input type="checkbox" id="chk-block" checked>
+          <span class="toggle-text">Block rich countries</span>
+          <div class="toggle-track">
+            <div class="toggle-thumb"></div>
+          </div>
+        </label>
+      </header>
+
+      <div id="map-container">
+        <div id="map-wrap"></div>
+        <div id="zoom-controls">
+          <button id="zoom-in">+</button>
+          <button id="zoom-reset">⌂</button>
+          <button id="zoom-out">−</button>
+        </div>
+        <div id="legend"></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -57,11 +72,13 @@
   <ul id="panel-cities"></ul>
 </div>
 
-<div id="expansion-sidebar" class="sidebar-hidden">
-  <div id="expansion-sidebar-header">
-    <span id="expansion-sidebar-totals"></span>
+<div id="roadmap-overlay" class="roadmap-hidden">
+  <div id="roadmap-header">
+    <span id="roadmap-title">Growth Roadmap</span>
+    <span id="roadmap-totals"></span>
+    <button id="roadmap-close">×</button>
   </div>
-  <div id="expansion-sidebar-body"></div>
+  <div id="roadmap-body"></div>
 </div>
 
 <div id="tooltip"></div>

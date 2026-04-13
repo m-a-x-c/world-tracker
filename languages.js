@@ -79,9 +79,8 @@ const COUNTRY_LANGUAGE = {
   IE:'english',
   JM:'english', TT:'english', BB:'english', BS:'english', GY:'english',
   BZ:'english', GD:'english', AG:'english', DM:'english',
-  KN:'english', LC:'english', VC:'english',
-  SB:'english', WS:'english', TO:'english', KI:'english', MH:'english',
-  FM:'english', PW:'english', NR:'english', TV:'english',
+  KN:'english', LC:'english', VC:'english', TO:'english', KI:'english', MH:'english',
+  FM:'english', PW:'english', NR:'english',
 
   // ── French ───────────────────────────────────────────────────────────────
   FR:'french', MC:'french', LU:'french',
@@ -89,7 +88,7 @@ const COUNTRY_LANGUAGE = {
   SN:'french', ML:'french', CI:'french', BJ:'french', TG:'french',
   GN:'french', NE:'french', BF:'french', CF:'french',
   GA:'french', CG:'french', CD:'french',
-  SC:'french', NC:'french', PF:'french', MU:'french',
+  SC:'french', PF:'french', MU:'french',
 
   // ── Arabic ───────────────────────────────────────────────────────────────
   SA:'arabic', EG:'arabic', LY:'arabic',
@@ -223,9 +222,6 @@ const COUNTRY_LANGUAGE = {
 
   // ── Zambia ───────────────────────────────────────────────────────────────
   ZM:'chichewa', // Bemba most spoken (~33%) but Nyanja/Chichewa widely used as lingua franca
-
-  // ── Fiji ──────────────────────────────────────────────────────────────────
-  FJ:'english', // English is the lingua franca; iTaukei Fijian and Hindi also spoken
 
   // ── Papua New Guinea ──────────────────────────────────────────────────────
   PG:'english', // Tok Pisin (English creole) is the true national lingua franca

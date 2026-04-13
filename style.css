@@ -31,6 +31,19 @@ body {
   overflow: hidden;
 }
 
+#app-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+#main-col {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
 /* ── Header ── */
 header {
   display: flex;
@@ -317,25 +330,30 @@ header h1 {
 
 /* ── Expansion sidebar ── */
 #expansion-sidebar {
-  position: fixed;
-  top: 0; left: 0;
   width: var(--panel-w);
-  height: 100vh;
+  flex-shrink: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  z-index: 100;
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  overflow: hidden;
 }
-#expansion-sidebar.sidebar-hidden { transform: translateX(-100%); }
 
 #expansion-sidebar-header {
   padding: 14px 16px 10px;
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
-  font-size: 0.78rem;
+}
+#expansion-sidebar-title {
+  font-size: 0.95rem;
   font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+}
+#expansion-sidebar-totals {
+  font-size: 0.75rem;
+  font-weight: 600;
   color: #00e676;
 }
 
@@ -461,6 +479,135 @@ header h1 {
 /* ── Expansion button ── */
 .mode-btn.expansion { border-color: #00e676; color: #00e676; }
 .mode-btn.expansion.active { background: #00e676; color: #111; }
+
+.mode-btn.roadmap { border-color: #fff; color: #fff; }
+.mode-btn.roadmap.active { background: #fff; color: #111; }
+
+/* ── Full Roadmap Overlay ── */
+#roadmap-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 500;
+  display: flex;
+  flex-direction: column;
+  transition: opacity 0.2s;
+}
+#roadmap-overlay.roadmap-hidden { display: none; }
+
+#roadmap-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+#roadmap-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.5px;
+}
+#roadmap-totals {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #00e676;
+  flex: 1;
+}
+#roadmap-close {
+  background: var(--surface2);
+  border: none;
+  border-radius: 50%;
+  width: 32px; height: 32px;
+  font-size: 1.1rem;
+  color: var(--text2);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.15s;
+}
+#roadmap-close:hover { background: var(--hover); color: #fff; }
+
+#roadmap-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+/* Tree */
+.rm-tree {
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 0.82rem;
+  display: inline-flex;
+  flex-direction: column;
+}
+
+.rm-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 2px 0;
+  white-space: nowrap;
+}
+.rm-row:hover { background: var(--surface2); border-radius: 4px; }
+
+.rm-prefix {
+  color: var(--text2);
+  opacity: 0.4;
+  flex-shrink: 0;
+  font-size: 0.78rem;
+}
+
+/* Phase row */
+.rm-phase-row { padding: 5px 0; }
+.rm-swatch {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  display: inline-block;
+  margin-bottom: -1px;
+}
+.rm-phase-name {
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.88rem;
+}
+
+/* Country row */
+.rm-country-row { padding: 3px 0; }
+.rm-flag { font-size: 0.9rem; flex-shrink: 0; }
+.rm-country-name {
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* City row */
+.rm-city-row { padding: 1px 0; }
+.rm-city-rank {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: inline-flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+.rm-city-name { color: var(--text2); }
+.rm-city-pop { opacity: 0.5; font-size: 0.72rem; }
+.rm-city-reps { color: var(--text2); font-weight: 600; white-space: nowrap; }
+.rm-city-reps.done { color: #00e676; }
+
+.rm-stats {
+  color: var(--text2);
+  font-size: 0.72rem;
+  margin-left: 8px;
+  opacity: 0.7;
+}
 
 /* ── Expansion city pins ── */
 .city-pin.expansion-pin .pin-dot { fill: #ff4500; stroke: #7a1a00; }

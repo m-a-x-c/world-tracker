@@ -33,6 +33,11 @@ const BLOCKED_FILL = '#111318';
 
 // ── Pan/zoom ───────────────────────────────────────────────────────────────
 let vp = { tx: 0, ty: 0, scale: 1 };
+
+function initViewport() {
+  vp = { tx: 0, ty: 0, scale: 1 };
+  applyTransform();
+}
 let dragging = false;
 let dragMoved = false;
 let dragStart = { x: 0, y: 0 };
@@ -106,8 +111,7 @@ function initPanZoom() {
     zoomAt(c.clientWidth / 2, c.clientHeight / 2, 1 / 1.5);
   });
   document.getElementById('zoom-reset').addEventListener('click', () => {
-    vp = { tx: 0, ty: 0, scale: 1 };
-    applyTransform();
+    initViewport();
   });
 }
 
@@ -159,7 +163,6 @@ function deactivateOverlays(except) {
     document.getElementById('btn-expansion').classList.remove('active');
     const bar = document.getElementById('expansion-bar');
     if (bar) bar.style.display = 'none';
-    document.getElementById('expansion-sidebar').classList.add('sidebar-hidden');
     refreshExpansionPins();
   }
 }
@@ -536,6 +539,100 @@ function buildExpansionSidebar() {
   }
 }
 
+// ── Full Roadmap Overlay ──────────────────────────────────────────────────
+function buildRoadmapOverlay() {
+  const body = document.getElementById('roadmap-body');
+  body.innerHTML = '';
+
+  const t = getExpansionTotals();
+  document.getElementById('roadmap-totals').textContent =
+    `${t.totalCities} cities · ${t.totalRepsActual.toLocaleString()}/${t.totalRepsGoal.toLocaleString()} reps`;
+
+  const tree = document.createElement('div');
+  tree.className = 'rm-tree';
+
+  for (let pi = 0; pi < EXPANSION_PHASES.length; pi++) {
+    const phase = EXPANSION_PHASES[pi];
+    const isLastPhase = pi === EXPANSION_PHASES.length - 1;
+
+    let phaseCities = 0, phaseActual = 0, phaseGoal = 0;
+    for (const cc of phase.countries) {
+      const cities = getTargetCities(cc);
+      phaseCities += cities.length;
+      phaseGoal += cities.reduce((s, c) => s + cityRepsGoal(c.pop), 0);
+      const st = expansionState[cc];
+      if (st && st.reps) for (const r of Object.values(st.reps)) phaseActual += r;
+    }
+
+    // Phase row
+    const phaseRow = document.createElement('div');
+    phaseRow.className = 'rm-row rm-phase-row';
+    phaseRow.innerHTML = `
+      <span class="rm-prefix">${isLastPhase ? '└─' : '├─'}</span>
+      <span class="rm-swatch" style="background:${phase.color}"></span>
+      <span class="rm-phase-name">${phase.label}</span>
+      <span class="rm-stats">${phaseCities} cities · ${phaseActual}/${phaseGoal} reps</span>`;
+    tree.appendChild(phaseRow);
+
+    for (let ci = 0; ci < phase.countries.length; ci++) {
+      const cc = phase.countries[ci];
+      const isLastCountry = ci === phase.countries.length - 1;
+      const info = COUNTRY_INFO[cc] || { name: cc };
+      const state = getCountryExpansionState(cc);
+      const cities = getTargetCities(cc);
+      const reps = state.reps || {};
+      const actual = cities.reduce((s, c) => s + (reps[c.name] || 0), 0);
+      const goal = cities.reduce((s, c) => s + cityRepsGoal(c.pop), 0);
+
+      const phaseIndent = isLastPhase ? '&nbsp;&nbsp;&nbsp;&nbsp;' : '│&nbsp;&nbsp;&nbsp;';
+      const countryPrefix = isLastCountry ? '└─' : '├─';
+
+      // Country row
+      const countryRow = document.createElement('div');
+      countryRow.className = 'rm-row rm-country-row';
+      countryRow.innerHTML = `
+        <span class="rm-prefix">${phaseIndent}${countryPrefix}</span>
+        <span class="rm-flag">${countryFlag(cc)}</span>
+        <span class="rm-country-name">${info.name || cc}</span>
+        <span class="rm-stats">${cities.length} cities · ${actual}/${goal} reps</span>`;
+      tree.appendChild(countryRow);
+
+      for (let ki = 0; ki < cities.length; ki++) {
+        const city = cities[ki];
+        const isLastCity = ki === cities.length - 1;
+        const count = reps[city.name] || 0;
+        const cgoal = cityRepsGoal(city.pop);
+        const done = count >= cgoal;
+        const countryIndent = isLastCountry ? '&nbsp;&nbsp;&nbsp;&nbsp;' : '│&nbsp;&nbsp;&nbsp;';
+        const cityPrefix = isLastCity ? '└─' : '├─';
+
+        const cityRow = document.createElement('div');
+        cityRow.className = 'rm-row rm-city-row';
+        cityRow.innerHTML = `
+          <span class="rm-prefix">${phaseIndent}${countryIndent}${cityPrefix}</span>
+          <span class="rm-city-rank">${ki + 1}</span>
+          <span class="rm-city-name">${city.name}</span>
+          <span class="rm-city-pop">(${formatPop(city.pop)})</span>
+          <span class="rm-city-reps${done ? ' done' : ''}">${count}/${cgoal} reps</span>`;
+        tree.appendChild(cityRow);
+      }
+    }
+  }
+
+  body.appendChild(tree);
+}
+
+function openRoadmap() {
+  buildRoadmapOverlay();
+  document.getElementById('roadmap-overlay').classList.remove('roadmap-hidden');
+  document.getElementById('btn-roadmap').classList.add('active');
+}
+
+function closeRoadmap() {
+  document.getElementById('roadmap-overlay').classList.add('roadmap-hidden');
+  document.getElementById('btn-roadmap').classList.remove('active');
+}
+
 // ── Build map ──────────────────────────────────────────────────────────────
 function buildMap() {
   const container = document.getElementById('map-container');
@@ -544,7 +641,7 @@ function buildMap() {
   const H = container.clientHeight;
 
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 2000 1001');
+  svg.setAttribute('viewBox', '0 0 2060 1001');
   svg.setAttribute('width', W);
   svg.setAttribute('height', H);
   svg.id = 'world-svg';
@@ -619,6 +716,8 @@ function buildMap() {
 // ── Controls ───────────────────────────────────────────────────────────────
 function initControls() {
   document.getElementById('panel-close').addEventListener('click', closePanel);
+  document.getElementById('btn-roadmap').addEventListener('click', openRoadmap);
+  document.getElementById('roadmap-close').addEventListener('click', closeRoadmap);
 
   document.getElementById('btn-lang').addEventListener('click', () => {
     langMode = !langMode;
@@ -673,18 +772,8 @@ function initControls() {
       setOverlayFills(code => getExpansionColor(code) || DEFAULT_FILL);
       clearLegend();
       refreshExpansionPins();
-      // Show totals bar
-      let bar = document.getElementById('expansion-bar');
-      if (!bar) {
-        bar = document.createElement('div');
-        bar.id = 'expansion-bar';
-        bar.innerHTML = '<span id="expansion-totals"></span>';
-        document.getElementById('map-container').appendChild(bar);
-      }
-      bar.style.display = '';
-      // Show sidebar
-      document.getElementById('expansion-sidebar').classList.remove('sidebar-hidden');
-      buildExpansionSidebar();
+      const bar = document.getElementById('expansion-bar');
+      if (bar) bar.style.display = '';
       updateExpansionHeader();
     } else {
       setOverlayFills(null);
@@ -692,7 +781,6 @@ function initControls() {
       refreshExpansionPins();
       const bar = document.getElementById('expansion-bar');
       if (bar) bar.style.display = 'none';
-      document.getElementById('expansion-sidebar').classList.add('sidebar-hidden');
     }
   });
 }
@@ -726,6 +814,12 @@ function applyBlockState() {
 buildMap();
 initPanZoom();
 initControls();
+
+// Set initial viewport
+initViewport();
+
+// Build sidebar on load (always visible)
+buildExpansionSidebar();
 
 // Auto-activate expansion overlay on load
 document.getElementById('btn-expansion').click();
