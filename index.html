@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>World Country Tracker</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <header>
+    <h1>World Tracker</h1>
+    <div id="controls">
+      <button id="btn-pins" class="mode-btn pins active">📍 Cities</button>
+      <button id="btn-lang" class="mode-btn lang">🌐 Languages</button>
+      <button id="btn-gdp" class="mode-btn gdp">💰 GDP/capita</button>
+      <button id="btn-pop" class="mode-btn pop">👥 Population</button>
+    </div>
+    <label id="block-toggle" class="toggle-label">
+      <input type="checkbox" id="chk-block" checked>
+      <span class="toggle-text">Block rich countries</span>
+      <div class="toggle-track">
+        <div class="toggle-thumb"></div>
+      </div>
+    </label>
+  </header>
+
+  <div id="map-container">
+    <div id="map-wrap"></div>
+    <div id="zoom-controls">
+      <button id="zoom-in">+</button>
+      <button id="zoom-reset">⌂</button>
+      <button id="zoom-out">−</button>
+    </div>
+    <div id="legend"></div>
+  </div>
+</div>
+
+<!-- Side panel -->
+<div id="panel" class="panel-hidden">
+  <button id="panel-close">×</button>
+  <div id="panel-flag"></div>
+  <h2 id="panel-name"></h2>
+  <div id="panel-lang"></div>
+  <div id="panel-gdp"></div>
+  <div id="panel-pop"></div>
+  <h3>Cities by Population</h3>
+  <ul id="panel-cities"></ul>
+</div>
+
+<div id="tooltip"></div>
+
+<script src="map-data.js"></script>
+<script src="languages.js"></script>
+<script src="gdp.js"></script>
+<script src="population.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
