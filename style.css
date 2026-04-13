@@ -106,23 +106,30 @@ header h1 {
 .mode-btn {
   padding: 6px 14px;
   border-radius: 20px;
-  border: 2px solid transparent;
-  background: var(--surface2);
+  border: 2px solid var(--border);
+  background: transparent;
   color: var(--text2);
   font-size: 0.8rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.15s;
+  opacity: 0.5;
 }
-.mode-btn:hover { background: var(--hover); color: var(--text); }
-.mode-btn.pins { border-color: #ffd740; color: #ffd740; background: transparent; }
+.mode-btn:hover { opacity: 0.85; border-color: var(--text2); color: var(--text); }
+.mode-btn.active { opacity: 1; box-shadow: 0 0 8px 1px currentColor; }
+
+.mode-btn.pins { border-color: #ffd740; color: #ffd740; }
 .mode-btn.pins.active { background: #ffd740; color: #111; }
-.mode-btn.lang { border-color: #a0c4ff; color: #a0c4ff; background: transparent; }
+
+.mode-btn.lang { border-color: #a0c4ff; color: #a0c4ff; }
 .mode-btn.lang.active { background: #a0c4ff; color: #111; }
-.mode-btn.gdp { border-color: #69ff47; color: #69ff47; background: transparent; }
+
+.mode-btn.gdp { border-color: #69ff47; color: #69ff47; }
 .mode-btn.gdp.active { background: #69ff47; color: #111; }
-.mode-btn.pop { border-color: #d500f9; color: #d500f9; background: transparent; }
+
+.mode-btn.pop { border-color: #d500f9; color: #d500f9; }
 .mode-btn.pop.active { background: #d500f9; color: #fff; }
+
 
 /* ── Map ── */
 #map-container {
@@ -307,3 +314,129 @@ header h1 {
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
+
+/* ── Expansion button ── */
+.mode-btn.expansion { border-color: #00e676; color: #00e676; }
+.mode-btn.expansion.active { background: #00e676; color: #111; }
+
+/* ── Expansion city pins ── */
+.city-pin.expansion-pin .pin-dot { fill: #ff4500; stroke: #7a1a00; }
+.city-pin.expansion-pin .pin-glow { fill: rgba(255,69,0,0.2); }
+.city-pin.expansion-pin:hover .pin-dot { fill: #fff; }
+
+/* ── Expansion totals bar ── */
+#expansion-bar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(26,29,39,0.92);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 6px 18px;
+  font-size: 0.82rem;
+  color: #00e676;
+  font-weight: 600;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+  white-space: nowrap;
+  z-index: 20;
+}
+
+/* ── Expansion panel section ── */
+.expansion-phase-badge {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+#panel-phase-badge { text-align: center; }
+
+#panel-status-row {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.status-btn {
+  flex: 1;
+  padding: 5px 0;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface2);
+  color: var(--text2);
+  font-size: 0.73rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.status-btn:hover { background: var(--hover); color: var(--text); }
+.status-btn.status-active { border-color: transparent; }
+
+.expansion-summary {
+  font-size: 0.78rem;
+  color: var(--text2);
+  margin-bottom: 8px;
+}
+
+.exp-progress-bar {
+  height: 4px;
+  background: var(--surface2);
+  border-radius: 2px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+.exp-progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+
+#panel-expansion-cities { list-style: none; display: flex; flex-direction: column; gap: 4px; }
+
+.expansion-city-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--surface2);
+  border-radius: 8px;
+  font-size: 0.8rem;
+  gap: 8px;
+}
+
+.exp-city-info { display: flex; flex-direction: column; flex: 1; gap: 1px; }
+
+.exp-rep-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.rep-btn {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.9rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  line-height: 1;
+  transition: background 0.12s;
+}
+.rep-btn:hover { background: var(--hover); }
+
+.rep-count {
+  font-size: 0.75rem;
+  color: var(--text2);
+  min-width: 32px;
+  text-align: center;
+  font-weight: 600;
+}
+.rep-count.rep-done { color: #00e676; }

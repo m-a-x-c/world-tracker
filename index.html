@@ -16,6 +16,7 @@
       <button id="btn-lang" class="mode-btn lang">🌐 Languages</button>
       <button id="btn-gdp" class="mode-btn gdp">💰 GDP/capita</button>
       <button id="btn-pop" class="mode-btn pop">👥 Population</button>
+      <button id="btn-expansion" class="mode-btn expansion">📈 Expansion</button>
     </div>
     <label id="block-toggle" class="toggle-label">
       <input type="checkbox" id="chk-block" checked>
@@ -45,7 +46,14 @@
   <div id="panel-lang"></div>
   <div id="panel-gdp"></div>
   <div id="panel-pop"></div>
-  <h3>Cities by Population</h3>
+  <div id="panel-expansion-section" style="display:none">
+    <div id="panel-phase-badge"></div>
+    <div id="panel-status-row"></div>
+    <h3 style="border-top:1px solid var(--border);padding-top:12px;margin-top:4px">Target Cities</h3>
+    <div id="panel-expansion-summary"></div>
+    <ul id="panel-expansion-cities"></ul>
+  </div>
+  <h3 id="panel-cities-header">Cities by Population</h3>
   <ul id="panel-cities"></ul>
 </div>
 
@@ -55,6 +63,7 @@
 <script src="languages.js"></script>
 <script src="gdp.js"></script>
 <script src="population.js"></script>
+<script src="expansion.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

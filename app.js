@@ -112,9 +112,10 @@ function initPanZoom() {
 }
 
 // ── Overlay modes ─────────────────────────────────────────────────────────
-let langMode = false;
-let gdpMode  = false;
-let popMode  = false;
+let langMode      = false;
+let gdpMode       = false;
+let popMode       = false;
+let expansionMode = false;
 
 const DEFAULT_FILL = '#c8ced8';
 
@@ -153,6 +154,23 @@ function deactivateOverlays(except) {
     popMode = false;
     document.getElementById('btn-pop').classList.remove('active');
   }
+  if (except !== 'expansion' && expansionMode) {
+    expansionMode = false;
+    document.getElementById('btn-expansion').classList.remove('active');
+    const bar = document.getElementById('expansion-bar');
+    if (bar) bar.style.display = 'none';
+    refreshExpansionPins();
+  }
+}
+
+function getExpansionColor(code) {
+  const phase = EXPANSION_COUNTRY_PHASE[code];
+  if (!phase) return null;
+  return phase.color;
+}
+
+function getExpansionFill(code) {
+  return getExpansionColor(code) || DEFAULT_FILL;
 }
 
 function getLangColor(code) {
@@ -165,6 +183,7 @@ let selectedCode = null;
 
 function openPanel(code) {
   if (isBlocked(code)) return;
+  if (expansionMode && !EXPANSION_COUNTRY_PHASE[code]) return;
 
   selectedCode = code;
   const info = COUNTRY_INFO[code] || { name: code };
@@ -209,24 +228,35 @@ function openPanel(code) {
     popEl.style.color = '#fff';
   }
 
-  // Cities
+  // Cities by population — hidden in expansion mode
+  const citiesHeader = document.getElementById('panel-cities-header');
   const ul = document.getElementById('panel-cities');
-  ul.innerHTML = '';
-  const cities = CITIES[code];
-  if (!cities || cities.length === 0) {
-    ul.innerHTML = '<li style="color:#9ba3c2;font-size:0.8rem;padding:8px">No city data available</li>';
+  if (expansionMode) {
+    citiesHeader.style.display = 'none';
+    ul.style.display = 'none';
   } else {
-    cities.forEach((city, i) => {
-      const li = document.createElement('li');
-      const badgeClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
-      li.innerHTML = `
-        <span class="rank-badge ${badgeClass}">${i + 1}</span>
-        <span class="city-name">${city.name}</span>
-        <span class="city-pop">${formatPop(city.pop)}</span>
-      `;
-      ul.appendChild(li);
-    });
+    citiesHeader.style.display = '';
+    ul.style.display = '';
+    ul.innerHTML = '';
+    const cities = CITIES[code];
+    if (!cities || cities.length === 0) {
+      ul.innerHTML = '<li style="color:#9ba3c2;font-size:0.8rem;padding:8px">No city data available</li>';
+    } else {
+      cities.forEach((city, i) => {
+        const li = document.createElement('li');
+        const badgeClass = i === 0 ? 'gold' : i === 1 ? 'silver' : i === 2 ? 'bronze' : '';
+        li.innerHTML = `
+          <span class="rank-badge ${badgeClass}">${i + 1}</span>
+          <span class="city-name">${city.name}</span>
+          <span class="city-pop">${formatPop(city.pop)}</span>
+        `;
+        ul.appendChild(li);
+      });
+    }
   }
+
+  // Expansion section
+  renderExpansionPanel(code);
 
   document.getElementById('panel').classList.remove('panel-hidden');
 }
@@ -257,6 +287,104 @@ function moveTooltip(e) {
   tooltip.style.top  = (e.clientY - 28) + 'px';
 }
 function hideTooltip() { tooltip.classList.remove('visible'); }
+
+// ── Expansion pin refresh ─────────────────────────────────────────────────
+function refreshExpansionPins() {
+  // Re-style city pins based on expansion mode
+  document.querySelectorAll('.city-pin').forEach(g => {
+    const cc = g.dataset.cc;
+    if (!cc) return;
+    const isTarget = expansionMode && EXPANSION_COUNTRY_PHASE[cc];
+    g.classList.toggle('expansion-pin', !!isTarget);
+  });
+}
+
+// ── Expansion panel section ───────────────────────────────────────────────
+function renderExpansionPanel(code) {
+  const phase = EXPANSION_COUNTRY_PHASE[code];
+  const section = document.getElementById('panel-expansion-section');
+  if (!phase) {
+    section.style.display = 'none';
+    return;
+  }
+  section.style.display = '';
+
+  // Phase badge
+  const phaseBadge = document.getElementById('panel-phase-badge');
+  phaseBadge.innerHTML = `<span class="expansion-phase-badge" style="background:${phase.color};color:${isLight(phase.color)?'#111':'#fff'}">${phase.label}</span>`;
+
+  // Status row
+  const state = getCountryExpansionState(code);
+  const statusRow = document.getElementById('panel-status-row');
+  statusRow.innerHTML = EXPANSION_STATUSES.map(s =>
+    `<button class="status-btn${state.status === s ? ' status-active' : ''}" data-status="${s}" data-cc="${code}"
+      style="${state.status === s ? `background:${phase.color};color:${isLight(phase.color)?'#111':'#fff'}` : ''}">${s}</button>`
+  ).join('');
+  statusRow.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setCountryStatus(code, btn.dataset.status);
+      renderExpansionPanel(code);
+    });
+  });
+
+  // Target cities
+  const cities = getTargetCities(code);
+  const reps = state.reps || {};
+  const cityTotal = cities.reduce((sum, c) => sum + (reps[c.name] || 0), 0);
+  const cityGoal = cities.length * EXPANSION_REPS_PER_CITY;
+
+  const summary = document.getElementById('panel-expansion-summary');
+  summary.innerHTML = `
+    <div class="expansion-summary">
+      <span>${cities.length} cities · ${cityTotal}/${cityGoal} reps</span>
+      <div class="exp-progress-bar"><div class="exp-progress-fill" style="width:${cityGoal > 0 ? Math.min(100, cityTotal/cityGoal*100) : 0}%;background:${phase.color}"></div></div>
+    </div>`;
+
+  const ul = document.getElementById('panel-expansion-cities');
+  ul.innerHTML = '';
+  cities.forEach((city, i) => {
+    const count = reps[city.name] || 0;
+    const badgeClass = '';
+    const li = document.createElement('li');
+    li.className = 'expansion-city-row';
+    li.innerHTML = `
+      <span class="rank-badge ${badgeClass}">${i + 1}</span>
+      <div class="exp-city-info">
+        <span class="city-name">${city.name}</span>
+        <span class="city-pop">${formatPop(city.pop)}</span>
+      </div>
+      <div class="exp-rep-counter">
+        <button class="rep-btn rep-minus" data-city="${city.name}" data-cc="${code}">−</button>
+        <span class="rep-count ${count >= EXPANSION_REPS_PER_CITY ? 'rep-done' : ''}">${count}/${EXPANSION_REPS_PER_CITY}</span>
+        <button class="rep-btn rep-plus" data-city="${city.name}" data-cc="${code}">+</button>
+      </div>`;
+    ul.appendChild(li);
+  });
+
+  ul.querySelectorAll('.rep-plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cur = (getCountryExpansionState(btn.dataset.cc).reps[btn.dataset.city] || 0);
+      setCityReps(btn.dataset.cc, btn.dataset.city, cur + 1);
+      renderExpansionPanel(btn.dataset.cc);
+      updateExpansionHeader();
+    });
+  });
+  ul.querySelectorAll('.rep-minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const cur = (getCountryExpansionState(btn.dataset.cc).reps[btn.dataset.city] || 0);
+      setCityReps(btn.dataset.cc, btn.dataset.city, cur - 1);
+      renderExpansionPanel(btn.dataset.cc);
+      updateExpansionHeader();
+    });
+  });
+}
+
+function updateExpansionHeader() {
+  const el = document.getElementById('expansion-totals');
+  if (!el) return;
+  const t = getExpansionTotals();
+  el.textContent = `${t.totalCities} cities · ${t.totalRepsActual.toLocaleString()}/${t.totalRepsGoal.toLocaleString()} reps`;
+}
 
 // ── Build map ──────────────────────────────────────────────────────────────
 function buildMap() {
@@ -385,10 +513,37 @@ function initControls() {
       clearLegend();
     }
   });
+
+  document.getElementById('btn-expansion').addEventListener('click', () => {
+    expansionMode = !expansionMode;
+    document.getElementById('btn-expansion').classList.toggle('active', expansionMode);
+    if (expansionMode) {
+      deactivateOverlays('expansion');
+      setOverlayFills(code => getExpansionColor(code) || DEFAULT_FILL);
+      buildLegend(EXPANSION_PHASES.map(p => ({ color: p.color, label: p.label })));
+      refreshExpansionPins();
+      // Show totals bar
+      let bar = document.getElementById('expansion-bar');
+      if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'expansion-bar';
+        bar.innerHTML = '<span id="expansion-totals"></span>';
+        document.getElementById('map-container').appendChild(bar);
+      }
+      updateExpansionHeader();
+      bar.style.display = '';
+    } else {
+      setOverlayFills(null);
+      clearLegend();
+      refreshExpansionPins();
+      const bar = document.getElementById('expansion-bar');
+      if (bar) bar.style.display = 'none';
+    }
+  });
 }
 
 function applyBlockState() {
-  const currentOverlay = langMode ? getLangColor : gdpMode ? getGdpColor : popMode ? getPopColor : null;
+  const currentOverlay = langMode ? getLangColor : gdpMode ? getGdpColor : popMode ? getPopColor : expansionMode ? (code => getExpansionColor(code) || DEFAULT_FILL) : null;
   document.querySelectorAll('.country').forEach(el => {
     const code = el.dataset.code;
     const blocked = isBlocked(code);
@@ -403,10 +558,12 @@ function applyBlockState() {
       el.setAttribute('fill', currentOverlay ? currentOverlay(code) : DEFAULT_FILL);
     }
   });
-  // city pins: hide/show based on block state
+  // city pins: hide/show based on block state, re-apply expansion styling
   document.querySelectorAll('.city-pin').forEach(g => {
     const cc = g.dataset.cc;
-    if (cc) g.style.display = isBlocked(cc) ? 'none' : '';
+    if (!cc) return;
+    g.style.display = isBlocked(cc) ? 'none' : '';
+    g.classList.toggle('expansion-pin', expansionMode && !!EXPANSION_COUNTRY_PHASE[cc]);
   });
 }
 
@@ -414,6 +571,9 @@ function applyBlockState() {
 buildMap();
 initPanZoom();
 initControls();
+
+// Auto-activate expansion overlay on load
+document.getElementById('btn-expansion').click();
 
 // Block toggle
 const chkBlock = document.getElementById('chk-block');
