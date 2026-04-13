@@ -16,7 +16,7 @@ function countryFlag(code) {
 
 // ── Blocked countries ──────────────────────────────────────────────────────
 const GDP_BLOCK_THRESHOLD = 17000;
-const BLOCK_EXCEPTIONS = new Set(['SA', 'CL', 'UY', 'GY']);
+const BLOCK_EXCEPTIONS = new Set(['SA', 'CL', 'UY', 'GY', 'QA', 'KW', 'BH', 'OM', 'AE']);
 let blockMode = true; // on by default
 
 const BLOCK_EXTRA = new Set(['KP']); // North Korea
@@ -505,7 +505,7 @@ function buildExpansionSidebar() {
       countryDiv.innerHTML = `
         <div class="sb-country-header">
           <span class="sb-country-flag">${countryFlag(cc)}</span>
-          <span class="sb-country-name">${info.name || cc}</span>
+          <span class="sb-country-name">${info.name || cc} <span class="sb-city-pop">(${formatPop(COUNTRY_POPULATION[cc] || 0)})</span></span>
           ${state.status !== 'Planned' ? `<span class="sb-country-status ${statusClass}">${state.status}</span>` : ''}
           <span class="sb-country-reps">${cities.length} cities · ${countryActual}/${countryGoal} reps</span>
           <span class="sb-chevron-sm">▶</span>

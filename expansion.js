@@ -10,7 +10,7 @@ const EXPANSION_PHASES = [
     id: 2,
     label: 'Phase 2 — Arabic',
     color: '#ffab40',
-    countries: ['SA', 'EG', 'DZ', 'MA', 'LY', 'TN', 'SD', 'IQ', 'SY', 'YE', 'JO', 'LB', 'OM', 'KW', 'QA', 'BH'],
+    countries: ['SA', 'EG', 'DZ', 'MA', 'LY', 'TN', 'SD', 'IQ', 'SY', 'YE', 'JO', 'LB', 'OM', 'KW', 'QA', 'BH', 'AE'],
   },
   {
     id: 3,
