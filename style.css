@@ -315,6 +315,149 @@ header h1 {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 3px; }
 
+/* ── Expansion sidebar ── */
+#expansion-sidebar {
+  position: fixed;
+  top: 0; left: 0;
+  width: var(--panel-w);
+  height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+#expansion-sidebar.sidebar-hidden { transform: translateX(-100%); }
+
+#expansion-sidebar-header {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #00e676;
+}
+
+#expansion-sidebar-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 0;
+}
+
+/* Phase row */
+.sb-phase {
+  border-bottom: 1px solid var(--border);
+}
+.sb-phase-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.sb-phase-header:hover { background: var(--surface2); }
+.sb-phase-swatch {
+  width: 10px; height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.sb-phase-label {
+  flex: 1;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text);
+}
+.sb-phase-count {
+  font-size: 0.7rem;
+  color: var(--text2);
+  white-space: nowrap;
+}
+.sb-chevron {
+  font-size: 0.65rem;
+  color: var(--text2);
+  transition: transform 0.2s;
+  margin-left: 4px;
+}
+.sb-phase.open .sb-chevron { transform: rotate(90deg); }
+.sb-phase-body { display: none; }
+.sb-phase.open .sb-phase-body { display: block; }
+
+/* Country row */
+.sb-country {
+  border-top: 1px solid var(--border);
+}
+.sb-country-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 24px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s;
+}
+.sb-country-header:hover { background: var(--surface2); }
+.sb-country-flag { font-size: 0.9rem; }
+.sb-country-name {
+  flex: 1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.sb-country-status {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: var(--surface2);
+  color: var(--text2);
+}
+.sb-country-status.status-active   { background: rgba(0,230,118,0.2); color: #00e676; }
+.sb-country-status.status-launched { background: rgba(0,230,118,0.4); color: #00e676; }
+.sb-country-reps {
+  font-size: 0.68rem;
+  color: var(--text2);
+  white-space: nowrap;
+}
+.sb-chevron-sm {
+  font-size: 0.6rem;
+  color: var(--text2);
+  transition: transform 0.2s;
+  margin-left: 2px;
+}
+.sb-country.open .sb-chevron-sm { transform: rotate(90deg); }
+.sb-country-body { display: none; padding: 4px 0 6px; }
+.sb-country.open .sb-country-body { display: block; }
+
+/* City row */
+.sb-city-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 14px 4px 36px;
+  font-size: 0.72rem;
+}
+.sb-city-rank {
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sb-city-name { flex: 1; color: var(--text2); }
+.sb-city-pop { font-size: 0.65rem; opacity: 0.65; }
+.sb-city-reps {
+  font-size: 0.68rem;
+  color: var(--text2);
+  white-space: nowrap;
+}
+.sb-city-reps.done { color: #00e676; }
+
 /* ── Expansion button ── */
 .mode-btn.expansion { border-color: #00e676; color: #00e676; }
 .mode-btn.expansion.active { background: #00e676; color: #111; }
@@ -323,6 +466,9 @@ header h1 {
 .city-pin.expansion-pin .pin-dot { fill: #ff4500; stroke: #7a1a00; }
 .city-pin.expansion-pin .pin-glow { fill: rgba(255,69,0,0.2); }
 .city-pin.expansion-pin:hover .pin-dot { fill: #fff; }
+.city-pin.pin-highlight .pin-dot { fill: #fff !important; stroke: #aaa !important; }
+.city-pin.pin-highlight .pin-glow { fill: rgba(255,255,255,0.35) !important; }
+.city-pin.pin-highlight { filter: drop-shadow(0 0 4px #fff); }
 
 /* ── Expansion totals bar ── */
 #expansion-bar {

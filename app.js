@@ -159,6 +159,7 @@ function deactivateOverlays(except) {
     document.getElementById('btn-expansion').classList.remove('active');
     const bar = document.getElementById('expansion-bar');
     if (bar) bar.style.display = 'none';
+    document.getElementById('expansion-sidebar').classList.add('sidebar-hidden');
     refreshExpansionPins();
   }
 }
@@ -288,6 +289,51 @@ function moveTooltip(e) {
 }
 function hideTooltip() { tooltip.classList.remove('visible'); }
 
+// ── City pin highlight ─────────────────────────────────────────────────────
+function highlightCityPin(cc, city) {
+  const existing = document.querySelector(`.city-pin[data-city="${CSS.escape(city.name)}"]`);
+  if (existing) {
+    existing.classList.add('pin-highlight');
+    return;
+  }
+  // No permanent pin — create a temporary one
+  if (city.lat == null || city.lng == null) return;
+  const pinsGroup = document.getElementById('city-pins');
+  if (!pinsGroup) return;
+  const x = (city.lng + 180) / 360 * 2000;
+  const y = (90 - city.lat) / 180 * 1001;
+
+  const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+  g.setAttribute('class', 'city-pin pin-highlight pin-temp');
+  g.setAttribute('transform', `translate(${x.toFixed(2)},${y.toFixed(2)})`);
+  g.dataset.cc = cc;
+  g.dataset.city = city.name;
+
+  const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  glow.setAttribute('r', '3.5');
+  glow.setAttribute('class', 'pin-glow');
+
+  const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  dot.setAttribute('r', '1.8');
+  dot.setAttribute('class', 'pin-dot');
+
+  g.appendChild(glow);
+  g.appendChild(dot);
+  pinsGroup.appendChild(g);
+}
+
+function unhighlightCityPin(city) {
+  document.querySelectorAll('.city-pin').forEach(g => {
+    if (g.dataset.city === city.name) {
+      if (g.classList.contains('pin-temp')) {
+        g.remove();
+      } else {
+        g.classList.remove('pin-highlight');
+      }
+    }
+  });
+}
+
 // ── Expansion pin refresh ─────────────────────────────────────────────────
 function refreshExpansionPins() {
   // Re-style city pins based on expansion mode
@@ -324,6 +370,7 @@ function renderExpansionPanel(code) {
     btn.addEventListener('click', () => {
       setCountryStatus(code, btn.dataset.status);
       renderExpansionPanel(code);
+      buildExpansionSidebar();
     });
   });
 
@@ -331,7 +378,7 @@ function renderExpansionPanel(code) {
   const cities = getTargetCities(code);
   const reps = state.reps || {};
   const cityTotal = cities.reduce((sum, c) => sum + (reps[c.name] || 0), 0);
-  const cityGoal = cities.length * EXPANSION_REPS_PER_CITY;
+  const cityGoal = cities.reduce((sum, c) => sum + cityRepsGoal(c.pop), 0);
 
   const summary = document.getElementById('panel-expansion-summary');
   summary.innerHTML = `
@@ -355,10 +402,16 @@ function renderExpansionPanel(code) {
       </div>
       <div class="exp-rep-counter">
         <button class="rep-btn rep-minus" data-city="${city.name}" data-cc="${code}">−</button>
-        <span class="rep-count ${count >= EXPANSION_REPS_PER_CITY ? 'rep-done' : ''}">${count}/${EXPANSION_REPS_PER_CITY}</span>
+        <span class="rep-count ${count >= cityRepsGoal(city.pop) ? 'rep-done' : ''}">${count}/${cityRepsGoal(city.pop)}</span>
         <button class="rep-btn rep-plus" data-city="${city.name}" data-cc="${code}">+</button>
       </div>`;
     ul.appendChild(li);
+  });
+
+  cities.forEach((city, i) => {
+    const li = ul.children[i];
+    li.addEventListener('mouseenter', () => highlightCityPin(code, city));
+    li.addEventListener('mouseleave', () => unhighlightCityPin(city));
   });
 
   ul.querySelectorAll('.rep-plus').forEach(btn => {
@@ -381,9 +434,106 @@ function renderExpansionPanel(code) {
 
 function updateExpansionHeader() {
   const el = document.getElementById('expansion-totals');
-  if (!el) return;
-  const t = getExpansionTotals();
-  el.textContent = `${t.totalCities} cities · ${t.totalRepsActual.toLocaleString()}/${t.totalRepsGoal.toLocaleString()} reps`;
+  if (el) {
+    const t = getExpansionTotals();
+    el.textContent = `${t.totalCities} cities · ${t.totalRepsActual.toLocaleString()}/${t.totalRepsGoal.toLocaleString()} reps`;
+  }
+  buildExpansionSidebar();
+}
+
+// ── Expansion sidebar ─────────────────────────────────────────────────────
+function buildExpansionSidebar() {
+  const body = document.getElementById('expansion-sidebar-body');
+  if (!body) return;
+
+  const totalsEl = document.getElementById('expansion-sidebar-totals');
+  if (totalsEl) {
+    const t = getExpansionTotals();
+    totalsEl.textContent = `${t.totalCities} cities · ${t.totalRepsActual.toLocaleString()}/${t.totalRepsGoal.toLocaleString()} reps`;
+  }
+
+  // Preserve open states
+  const openPhases = new Set();
+  const openCountries = new Set();
+  body.querySelectorAll('.sb-phase.open').forEach(el => openPhases.add(el.dataset.phase));
+  body.querySelectorAll('.sb-country.open').forEach(el => openCountries.add(el.dataset.cc));
+
+  body.innerHTML = '';
+
+  for (const phase of EXPANSION_PHASES) {
+    const phaseDiv = document.createElement('div');
+    phaseDiv.className = 'sb-phase' + (openPhases.has(String(phase.id)) ? ' open' : '');
+    phaseDiv.dataset.phase = phase.id;
+
+    // Count phase cities
+    let phaseCities = 0;
+    for (const cc of phase.countries) {
+      phaseCities += getTargetCities(cc).length;
+    }
+
+    phaseDiv.innerHTML = `
+      <div class="sb-phase-header">
+        <span class="sb-phase-swatch" style="background:${phase.color}"></span>
+        <span class="sb-phase-label">${phase.label}</span>
+        <span class="sb-phase-count">${phaseCities} cities</span>
+        <span class="sb-chevron">▶</span>
+      </div>
+      <div class="sb-phase-body"></div>`;
+
+    phaseDiv.querySelector('.sb-phase-header').addEventListener('click', () => {
+      phaseDiv.classList.toggle('open');
+    });
+
+    const phaseBody = phaseDiv.querySelector('.sb-phase-body');
+
+    for (const cc of phase.countries) {
+      const info = COUNTRY_INFO[cc] || { name: cc };
+      const state = getCountryExpansionState(cc);
+      const cities = getTargetCities(cc);
+      const reps = state.reps || {};
+      const countryActual = cities.reduce((s, c) => s + (reps[c.name] || 0), 0);
+      const countryGoal = cities.reduce((sum, c) => sum + cityRepsGoal(c.pop), 0);
+      const statusClass = state.status === 'Active' ? 'status-active' : state.status === 'Launched' ? 'status-launched' : '';
+
+      const countryDiv = document.createElement('div');
+      countryDiv.className = 'sb-country' + (openCountries.has(cc) ? ' open' : '');
+      countryDiv.dataset.cc = cc;
+
+      countryDiv.innerHTML = `
+        <div class="sb-country-header">
+          <span class="sb-country-flag">${countryFlag(cc)}</span>
+          <span class="sb-country-name">${info.name || cc}</span>
+          ${state.status !== 'Planned' ? `<span class="sb-country-status ${statusClass}">${state.status}</span>` : ''}
+          <span class="sb-country-reps">${cities.length} cities · ${countryActual}/${countryGoal} reps</span>
+          <span class="sb-chevron-sm">▶</span>
+        </div>
+        <div class="sb-country-body"></div>`;
+
+      countryDiv.querySelector('.sb-country-header').addEventListener('click', () => {
+        countryDiv.classList.toggle('open');
+      });
+
+      const countryBody = countryDiv.querySelector('.sb-country-body');
+      cities.forEach((city, i) => {
+        const count = reps[city.name] || 0;
+        const goal = cityRepsGoal(city.pop);
+        const done = count >= goal;
+        const cityRow = document.createElement('div');
+        cityRow.className = 'sb-city-row';
+        cityRow.innerHTML = `
+          <span class="sb-city-rank">${i + 1}</span>
+          <span class="sb-city-name">${city.name} <span class="sb-city-pop">(${formatPop(city.pop)})</span></span>
+          <span class="sb-city-reps${done ? ' done' : ''}">${count}/${goal}</span>`;
+        cityRow.addEventListener('mouseenter', () => highlightCityPin(cc, city));
+        cityRow.addEventListener('mouseleave', () => unhighlightCityPin(city));
+        countryBody.appendChild(cityRow);
+      });
+
+      phaseBody.appendChild(countryDiv);
+    }
+
+    body.appendChild(phaseDiv);
+  }
 }
 
 // ── Build map ──────────────────────────────────────────────────────────────
@@ -442,6 +592,7 @@ function buildMap() {
       g.setAttribute('class', 'city-pin');
       g.setAttribute('transform', `translate(${x.toFixed(2)},${y.toFixed(2)})`);
       g.dataset.cc = cc;
+      g.dataset.city = city.name;
 
       const glow = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
       glow.setAttribute('r', '3.5');
@@ -520,7 +671,7 @@ function initControls() {
     if (expansionMode) {
       deactivateOverlays('expansion');
       setOverlayFills(code => getExpansionColor(code) || DEFAULT_FILL);
-      buildLegend(EXPANSION_PHASES.map(p => ({ color: p.color, label: p.label })));
+      clearLegend();
       refreshExpansionPins();
       // Show totals bar
       let bar = document.getElementById('expansion-bar');
@@ -530,14 +681,18 @@ function initControls() {
         bar.innerHTML = '<span id="expansion-totals"></span>';
         document.getElementById('map-container').appendChild(bar);
       }
-      updateExpansionHeader();
       bar.style.display = '';
+      // Show sidebar
+      document.getElementById('expansion-sidebar').classList.remove('sidebar-hidden');
+      buildExpansionSidebar();
+      updateExpansionHeader();
     } else {
       setOverlayFills(null);
       clearLegend();
       refreshExpansionPins();
       const bar = document.getElementById('expansion-bar');
       if (bar) bar.style.display = 'none';
+      document.getElementById('expansion-sidebar').classList.add('sidebar-hidden');
     }
   });
 }

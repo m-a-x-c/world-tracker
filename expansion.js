@@ -68,7 +68,7 @@ const EXPANSION_PHASES = [
   },
   {
     id: 13,
-    label: 'Phase 13 — Remaining Europe',
+    label: 'Phase 13 — Eastern Europe',
     color: '#80cbc4',
     countries: ['UA', 'MD', 'AL', 'XK', 'BA', 'RS', 'ME', 'MK', 'BG', 'RO', 'BY'],
   },
@@ -83,10 +83,19 @@ const EXPANSION_PHASES = [
 // Status options for each country
 const EXPANSION_STATUSES = ['Planned', 'Active', 'Launched'];
 
-// City selection: all cities >= 500k pop, minimum 5 per country
+// City selection: all cities >= 500k pop, minimum 8 per country
 const EXPANSION_POP_THRESHOLD = 500000;
-const EXPANSION_MIN_CITIES = 5;
-const EXPANSION_REPS_PER_CITY = 10;
+const EXPANSION_MIN_CITIES = 8;
+
+// Reps goal per city based on population
+function cityRepsGoal(pop) {
+  let reps = 10;
+  if (pop >= 1e6) reps += 10;
+  if (pop >= 2e6) reps += 10;
+  if (pop >= 5e6) reps += 10;
+  if (pop >= 8e6) reps += 10;
+  return reps; // 10, 20, 30, 40, or 50
+}
 
 // Build a flat lookup: code -> phase
 const EXPANSION_COUNTRY_PHASE = {};
@@ -148,7 +157,7 @@ function getExpansionTotals() {
   for (const cc of Object.keys(EXPANSION_COUNTRY_PHASE)) {
     const cities = getTargetCities(cc);
     totalCities += cities.length;
-    totalRepsGoal += cities.length * EXPANSION_REPS_PER_CITY;
+    for (const c of cities) totalRepsGoal += cityRepsGoal(c.pop);
     const s = expansionState[cc];
     if (s && s.reps) {
       for (const r of Object.values(s.reps)) totalRepsActual += r;
